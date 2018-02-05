@@ -138,21 +138,25 @@ REST_FRAMEWORK= {
       'rest_framework.renderers.JSONRenderer',
       'rest_framework.renderers.BrowsableAPIRenderer',
     ),
-    #'DEFAULT_AUTHENTICATION_CLASSES' : (
-        #'rest_framework.authentication.SessionAuthentication',
-        #'rest_framework.authentication.BasicAuthentication',
-        #'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-    #),
-    #'DEFAULT_PERMISSION_CLASSES' : [
-       # 'rest_framework.permissions.DjangoModelPermissionsorAnonReadOnly',
+    'DEFAULT_AUTHENTICATION_CLASSES' : (
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES' : (
+        #'rest_framework.permissions.DjangoModelPermissionsorAnonReadOnly',
         #'rest_framework.permissions.IsAuthenticated,',
 
-    #],
-    'DEFAULT_PARSER_CLASSES': [
+    ),
+    'DEFAULT_PARSER_CLASSES': (
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
 
-    ],
+    ),
+}
 
+JWT_AUTH = {
+    'JWT_RESPONSE_PAYLOAD_HANDLER' : 'AuthSer.custom_token.jwt_reponse_payload_handler',
+    'JWT_PAYLOAD_HANDLER' : 'AuthSer.custom_token.jwt_payload_handler',
 }

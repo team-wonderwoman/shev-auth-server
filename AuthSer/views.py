@@ -57,9 +57,11 @@ def login(request):
         #print(json_pwd)
         #print(user_id.data['password'])
 
-        # 사용자가 입력한 비밀번호가 DB에 저장된 비밀번호와 같은지 비
+        # 사용자가 입력한 비밀번호가 DB에 저장된 비밀번호와 같은지 비교
         if request.data['password'] == user_id.data['password']:
-            #TODO 토큰발행
+            #TODO 토큰 발행
+
+
             return Response({'Login_Success' : user_id.data},status=status.HTTP_202_ACCEPTED)
         else:
             return Response({'result_message' : 'Invalid Password. Please Check your password.'},status=status.HTTP_404_NOT_FOUND)
