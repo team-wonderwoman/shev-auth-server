@@ -101,27 +101,29 @@ CACHES = {
     'default' : {
         'BACKEND' : 'redis_cache.RedisCache',
         'LOCATION' : [ # Redis Server의 위치
-            '127.0.0.1:6379', # Primary Server - Read & Write
-            '127.0.0.1:6380', # Secondary Server - Read Only
+            'redis://127.0.0.1:6379/1', # Primary Server - Read & Write
+        #    '127.0.0.1:6380', # Secondary Server - Read Only
         ],
-        'OPTIONS' : {
-            'DB' : 1, # Key와 Value가 다른 공간에 존재하는지?
-            'PASSWORD' : 'yejinredis', # Redis Server 비밀번호
-            'MASTER_CACHE' : '127.0.0.1:6379',
-            'PARSER_CLASS' : 'redis.connection.HiredisParser', # C를쓰므로 PythonParser보다 빠름
-            'SOCKET_TIMEOUT' : 5,
-            'SOCKET_CONNECT_TIMEOUT' : 5,
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        #'OPTIONS' : {
+        #    'DB' : 1, # Key와 Value가 다른 공간에 존재하는지?
+        #    'PASSWORD' : 'yejinredis', # Redis Server 비밀번호
+        #   'MASTER_CACHE' : '127.0.0.1:6379',
+        #    'PARSER_CLASS' : 'redis.connection.HiredisParser', # C를쓰므로 PythonParser보다 빠름
+        #    'SOCKET_TIMEOUT' : 5,
+        #    'SOCKET_CONNECT_TIMEOUT' : 5,
+        #   'CLIENT_CLASS': 'django_redis.client.DefaultClient',
             #'CONNECTION_POOL_CLASS' : 'redis.BlockingConnectionPool',
             #'CONNECTION_POOL_CLASS_KWARGS' : {
              #   'max_connections' : 50,
              #   'timeout' : 20,
 
-            },
+        #    },
 
     },
     'KEY_PREFIX' : 'example'
 }
+
+CACHE_TTL = 60 * 15
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
