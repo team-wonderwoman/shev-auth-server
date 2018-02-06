@@ -30,6 +30,8 @@ ALLOWED_HOSTS = ['*']
 CSRF_COOKIE_SECURE = True
 
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -49,8 +51,8 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     #'ShevAuthServer.middlewareTest.DisableCSRF',
-    #'django.middleware.csrf.CsrfViewMiddleware',
-    #'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -86,14 +88,40 @@ WSGI_APPLICATION = 'ShevAuthServer.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'mydjango', #DB명
-        'USER' : 'yejin', #데이터베이스 계정
-        'PASSWORD' : 'yejinchoi', #비밀번호
-        'HOST' : '127.0.0.1', #데이터베이스 주소
-        'PORT' : '3306', #포트번호
+        'NAME': 'mysql', # DB명
+        'USER' : 'yejin', # 데이터베이스 계정
+        'PASSWORD' : 'yejin', # 비밀번호
+        'HOST' : '127.0.0.1', # 데이터베이스 주소
+        'PORT' : '3306', # 포트번호
     }
 }
 
+# Redis 세팅
+CACHES = {
+    'default' : {
+        'BACKEND' : 'redis_cache.RedisCache',
+        'LOCATION' : [ # Redis Server의 위치
+            '127.0.0.1:6379', # Primary Server - Read & Write
+            '127.0.0.1:6380', # Secondary Server - Read Only
+        ],
+        'OPTIONS' : {
+            'DB' : 1, # Key와 Value가 다른 공간에 존재하는지?
+            'PASSWORD' : 'yejinredis', # Redis Server 비밀번호
+            'MASTER_CACHE' : '127.0.0.1:6379',
+            'PARSER_CLASS' : 'redis.connection.HiredisParser', # C를쓰므로 PythonParser보다 빠름
+            'SOCKET_TIMEOUT' : 5,
+            'SOCKET_CONNECT_TIMEOUT' : 5,
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            #'CONNECTION_POOL_CLASS' : 'redis.BlockingConnectionPool',
+            #'CONNECTION_POOL_CLASS_KWARGS' : {
+             #   'max_connections' : 50,
+             #   'timeout' : 20,
+
+            },
+
+    },
+    'KEY_PREFIX' : 'example'
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -117,7 +145,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
-LANGUAGE_CODE = 'ko-kr'
+LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'Asia/Seoul'
 
@@ -143,20 +171,15 @@ REST_FRAMEWORK= {
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
     ),
-    'DEFAULT_PERMISSION_CLASSES' : (
+    #'DEFAULT_PERMISSION_CLASSES' : (
         #'rest_framework.permissions.DjangoModelPermissionsorAnonReadOnly',
         #'rest_framework.permissions.IsAuthenticated,',
 
-    ),
+    #),
     'DEFAULT_PARSER_CLASSES': (
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
 
     ),
-}
-
-JWT_AUTH = {
-    'JWT_RESPONSE_PAYLOAD_HANDLER' : 'AuthSer.custom_token.jwt_reponse_payload_handler',
-    'JWT_PAYLOAD_HANDLER' : 'AuthSer.custom_token.jwt_payload_handler',
 }
