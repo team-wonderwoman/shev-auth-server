@@ -59,9 +59,9 @@ MIDDLEWARE = [
 ]
 
 
-MIDDLEWARE_CLASSES=(
-    'AuthSer.middlewareTest.DisableCSRF',
-)
+#MIDDLEWARE_CLASSES=(
+    #'AuthSer.middlewareTest.DisableCSRF',
+#)
 
 ROOT_URLCONF = 'ShevAuthServer.urls'
 
@@ -119,12 +119,11 @@ CACHES = {
              #   'timeout' : 20,
 
         #    },
-
     },
     'KEY_PREFIX' : 'example'
 }
 
-CACHE_TTL = 60 * 15
+#CACHE_TTL = 60 * 15
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
