@@ -35,6 +35,8 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 # Application definition
 
 INSTALLED_APPS = [
+    'AuthSer',
+    'chat',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -42,8 +44,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'AuthSer',
-
 ]
 
 MIDDLEWARE = [
@@ -57,11 +57,6 @@ MIDDLEWARE = [
 
     #'AuthSer.middleware_web.TokenMiddleware',
 ]
-
-
-#MIDDLEWARE_CLASSES=(
-    #'AuthSer.middlewareTest.DisableCSRF',
-#)
 
 ROOT_URLCONF = 'ShevAuthServer.urls'
 
@@ -89,10 +84,10 @@ WSGI_APPLICATION = 'ShevAuthServer.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'mysql', # DB명
+        'NAME': 'shevdb', # DB명
         'USER' : 'yejin', # 데이터베이스 계정
         'PASSWORD' : 'yejin', # 비밀번호
-        'HOST' : '127.0.0.1', # 데이터베이스 주소
+        'HOST' : '192.168.0.24', # 데이터베이스 주소
         'PORT' : '3306', # 포트번호
     }
 }

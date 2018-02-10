@@ -58,5 +58,6 @@ def token_authentication(request):
         print(redis_get(token))
         logger.debug(redis_get(token))
         return True
+
     else:
         return False
