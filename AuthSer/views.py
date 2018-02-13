@@ -13,8 +13,6 @@ from .tokens import create_jwt, split_header_token, token_authentication
 from .logger_handler import logger
 from common.const import const_value, status_code
 from .redis import redis_get, redis_set , redis_delete, redis_expire
-from .sendmail import send_registration_mail
-
 
 # Create your views here.
 # 회원가입 - csrf_exempt 때문에 FBV로 구현
@@ -32,7 +30,7 @@ def signup(request):
             # TODO 비밀번호 암호화  - 함수로 구현하기
             serializer.save()
             # 회원 가입 확인 메일 발송
-            send_registration_mail(serializer)
+            #send_registration_mail(serializer)
             return Response({'result' : status_code['SIGNUP_SUCCESS'],'registered' : serializer.data},status=status.HTTP_200_OK)
         return Response({'result' : status_code['SIGNUP_INVALID_EMAIL']},status=status.HTTP_200_OK)
 
@@ -75,7 +73,7 @@ def login(request):
                 # 토큰 생성
                 token = create_jwt(user_id)
                 # Client 에게 토큰을 json에 담아 보냄
-                return Response({'result' : status_code['LOGIN_SUCCESS'], 'Auth_Token' : token, 'User_id' : user_id.id},status=status.HTTP_200_OK)
+                return Response({'result' : status_code['LOGIN_SUCCESS'], 'Auth_Token' : token, 'User_id' : user_id.id, 'user_name' : user_id.user_name},status=status.HTTP_200_OK)
 
             else:
                 return Response({'result' : status_code['LOGIN_INVALID_PASSWORD']},status=status.HTTP_200_OK)
@@ -136,11 +134,15 @@ class ProfileAPIView(APIView):
             except User.DoesNotExist:
                 return Response({'result' : status_code['USER_INFO_MODIFY_FAILURE']}, status=status.HTTP_200_OK)
 
+            print("Profile_post_serializer???????")
             serializer = UserModelSerializer(data=request.data, partial=True)
             if serializer.is_valid():
-                serializer.save(id=user_info)
+                print("Profile_post_serializer")
+                print(serializer.data['user_email'])
                 return Response({'result': status_code['USER_INFO_MODIFY_SUCCESS'], 'User data' : serializer.data}, status=status.HTTP_200_OK)
-            return Response({'result': status_code['USER_INFO_MODIFY_FAILURE'], 'User data': serializer.data},
+            else:
+                print("안들어가마마마마")
+                return Response({'result': status_code['USER_INFO_MODIFY_FAILURE'], 'User data': serializer.data},
                             status=status.HTTP_200_OK)
 
        else:
