@@ -1,17 +1,20 @@
+import json
 from django.db import models
 from django.utils.six import python_2_unicode_compatible
+
+from AuthSer.models import User
+
+import json,os
+from django.db import models
+from django.utils.six import python_2_unicode_compatible
+
 from AuthSer.models import User
 
 
 # TODO group app 으로 이동
 class Group(models.Model):
     group_name = models.CharField(max_length=50, null=False)  # group_name 입력은 필수로 한다.
-    members = models.ManyToManyField(
-        User,
-        related_name="groups",
-        through='GroupMember',
-        through_fields=('group_id', 'user_id')
-    )
+
     manager_id = models.ForeignKey(
         User,
         related_name="groupManagers",
@@ -23,8 +26,8 @@ class Group(models.Model):
         verbose_name = "group"
         verbose_name_plural = "groups"
 
-    def __str__(self):
-        return self.group_name
+    # def __str__(self):
+    #    return self.group_name
 
     # # 이 그룹의 모든 토픽을 가져온다.
     # def get_topic(self):
@@ -40,7 +43,6 @@ class GroupMember(models.Model):
         Group,
         related_name="groupMembers",
         on_delete=models.CASCADE
-
     )
     user_id = models.ForeignKey(
         User,
@@ -55,72 +57,6 @@ class GroupMember(models.Model):
     def __str__(self):
         return str(self.group_id)
 
-##############################################################################################
-
-
-# @python_2_unicode_compatible
-# class ChatRoom(models.Model):
-#     """
-#     A room for people to chat in.
-#     """
-#     group_id = models.ForeignKey(
-#         Group,
-#         related_name="chatRooms"
-#     )
-#     created_time = models.DateTimeField('Create Time', auto_now_add=True)
-#
-#     class Meta:
-#         ordering = ['-created_time']
-#
-#     # 해당 채팅룸의 모든 Message를 가져온다.
-#     def get_message(self):
-#         return self.message.all()
-#
-#     # 해당 채팅룸의 모든 ChatMember를 가져온다.
-#     def get_chat_member(self):
-#         return self.chatMember.all()
-#
-#
-# @python_2_unicode_compatible
-# class ChatMember(models.Model):
-#     user_id = models.ManyToManyField(User)
-#     chat_room_id = models.ManyToManyField(
-#         ChatRoom,
-#         related_name="chatMembers"
-#     )
-#     created_time = models.DateTimeField('Create Time', auto_now_add=True)
-#
-#
-# @python_2_unicode_compatible
-# class Message(models.Model):
-#     user_id = models.ManyToManyField(
-#         User,
-#         related_name="messages"
-#     )
-#     chat_room_id = models.ManyToManyField(
-#         ChatRoom,
-#         related_name="messages"
-#     )
-#     contents = models.TextField()  # 메시지 내용
-#     created_time = models.DateTimeField('Create Time', auto_now_add=True)
-#
-#     class Meta:
-#         ordering = ['-created_time']
-#
-#     def __str__(self):
-#         return '[{user_id}] {chat_room_id}: {created_time}'.format(**self.as_dict())
-#
-#     @property
-#     def formatted_created_time(self):
-#         return self.created_time.strftime('%b %-d %-I:%M %p')
-#
-#     def as_dict(self):
-#         return {
-#             'user_id': self.user_id,
-#             'chat_room_id': self.chat_room_id,
-#             'created_time': self.formatted_created_time
-#         }
-
 
 ##############################################################################################
 
@@ -132,7 +68,8 @@ class Topic(models.Model):
     topic_name = models.CharField(max_length=50, blank=True, null=False, default='main-topic')
     group_id = models.ForeignKey(
         Group,
-        related_name="topics"
+        related_name="topics",
+        on_delete=models.CASCADE,
     )
     created_time = models.DateTimeField('Create Time', auto_now_add=True)
 
@@ -142,51 +79,54 @@ class Topic(models.Model):
     def __str__(self):
         return self.topic_name
 
-
     @property
-    def websocket_group(self):
+    def group_name(self):
         """
-        Returns the Channels Group that sockets should subscribe to to get sent
+        Returns the Channels Group name that sockets should subscribe to to get sent
         messages as they are generated.
         """
-        return Group("room-%s" % self.id)
-
-    # def send_message(self, message, user, msg_type=MSG_TYPE_MESSAGE):
-    #     """
-    #     Called to send a message to the room on behalf of a user.
-    #     """
-    #     final_msg = {'room': str(self.id), 'message': message, 'username': user.username, 'msg_type': msg_type}
-    #
-    #     # Send out the message to everyone in the room
-    #     self.websocket_group.send(
-    #         {"text": json.dumps(final_msg)}
-    #     )
+        print("============group_name============" + str(self.id))
+        return "room-%s" % self.id
 
 
 @python_2_unicode_compatible
 class TopicMember(models.Model):
-    user_id = models.ManyToManyField(User)
-    topic_id = models.ManyToManyField(
+    user_id = models.ForeignKey(
+        User,
+        related_name="topics",
+        on_delete=models.CASCADE,
+    )
+    topic_id = models.ForeignKey(
         Topic,
-        related_name="topics"
+        related_name="topics",
+        on_delete=models.CASCADE,
     )
     created_time = models.DateTimeField('Create Time', auto_now_add=True)
 
     def __str__(self):
-        return self.topic_id
+        return '[{user_id}] {topic_id}'.format(**self.as_dict())
+
+    def as_dict(self):
+        return {
+            'user_id': self.user_id,
+            'topic_id': self.topic_id,
+        }
 
 
 @python_2_unicode_compatible
 class TopicMessage(models.Model):
-    user_id = models.ManyToManyField(
+    user_id = models.ForeignKey(
         User,
-        related_name="topic_messages"
+        related_name="topic_messages",
+        on_delete=models.CASCADE,
     )
-    topic_id = models.ManyToManyField(
+    topic_id = models.ForeignKey(
         Topic,
-        related_name="topic_messages"
+        related_name="topic_messages",
+        on_delete=models.CASCADE,
     )
     contents = models.TextField()  # 메시지 내용
+    is_file = models.BooleanField(default=False)  # file이면 True
     created_time = models.DateTimeField('Create Time', auto_now_add=True)
 
     class Meta:
@@ -206,3 +146,131 @@ class TopicMessage(models.Model):
             'created_time': self.formatted_created_time
         }
 
+##############################################################################################
+
+
+@python_2_unicode_compatible
+class ChatRoom(models.Model):
+    """
+    A chat for people to chat in.
+    """
+    group = models.ForeignKey(
+        Group,
+        related_name="chatRooms",
+        on_delete=models.CASCADE,
+    )
+    created_time = models.DateTimeField('Create Time', auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_time']
+
+    def __str__(self):
+        return '[{pk}] {group}'.format(**self.as_dict())
+
+    def as_dict(self):
+        return {
+            'pk': self.pk,
+            'group': self.group,
+        }
+
+    @property
+    def group_name(self):
+        """
+        Returns the Channels Group name that sockets should subscribe to to get sent
+        messages as they are generated.
+        """
+        print("============group_name============" + str(self.id))
+        return "room-%s" % self.id
+
+    # 해당 채팅방의 모든 ChatMember를 가져온다 (이 멤버들의 이름이 곧 채팅방의 이름)
+    def get_chatRoomMembers(self):
+        queryset = self.chatRoomMembers.filter(chatRoom=self.pk)
+        return queryset
+
+    # 해당 채팅방의 모든 Messages를 가져온다
+    def get_messages(self):
+        print("ChatRoom -- get_all_messages")
+        print(self.chatRoomMessages.all())
+        return self.chatRoomMessages.all()
+
+
+@python_2_unicode_compatible
+class ChatRoomMember(models.Model):
+    user = models.ForeignKey(
+        User,
+        related_name="chatRoomMembers",
+        on_delete=models.CASCADE,
+    )
+    chatRoom = models.ForeignKey(
+        ChatRoom,
+        related_name="chatRoomMembers",
+        on_delete=models.CASCADE,
+    )
+    created_time = models.DateTimeField('Create Time', auto_now_add=True)
+
+    def __str__(self):
+        return '[{user}] {chatRoom}'.format(**self.as_dict())
+
+    def as_dict(self):
+        return {
+            'user': self.user,
+            'chatRoom': self.chatRoom,
+        }
+
+
+@python_2_unicode_compatible
+class ChatRoomMessage(models.Model):
+    user = models.ForeignKey(
+        User,
+        related_name="chatRoomMessages",
+        on_delete=models.CASCADE,
+
+    )
+    chatRoom = models.ForeignKey(
+        ChatRoom,
+        related_name="chatRoomMessages",
+        on_delete=models.CASCADE,
+    )
+    contents = models.TextField()  # 메시지 내용
+    created_time = models.DateTimeField('Create Time', auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_time']
+
+    def __str__(self):
+        return '[{user}] {chatRoom}: {created_time}'.format(**self.as_dict())
+
+    @property
+    def formatted_created_time(self):
+        return self.created_time.strftime('%b %-d %-I:%M %p')
+
+    def as_dict(self):
+        return {
+            'user': self.user,
+            'chatRoom': self.chatRoom,
+            'created_time': self.formatted_created_time
+        }
+
+
+#########################################################################################
+
+@python_2_unicode_compatible
+class TopicFile(models.Model):
+    user = models.ForeignKey(
+        User,
+        related_name="topic_files",
+        on_delete=models.CASCADE,
+    )
+    message = models.ForeignKey(
+        TopicMessage,
+        related_name="topic_files",
+        on_delete=models.CASCADE,
+    )
+    file = models.FileField()
+    created_time = models.DateTimeField('Create Time', auto_now_add=True)
+
+    def get_filename(self):
+        filename = os.path.basename(self.file.name)
+        print("[[TopicFile]] get_filename")
+        print(filename)
+        return filename

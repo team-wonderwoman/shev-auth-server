@@ -10,4 +10,4 @@ class User(models.Model):
     modified_time = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.user_name
+        return self.user_email

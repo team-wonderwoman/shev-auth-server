@@ -12,8 +12,47 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 
 import os
 
+import json
+
+from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Env for dev / deploy
+def get_env(setting, envs):
+    try:
+        return envs[setting]
+    except KeyError:
+        error_msg = "You SHOULD set {} environ".format(setting)
+        raise ImproperlyConfigured(error_msg)
+
+DEV_ENVS = os.path.join(BASE_DIR, "envs_dev.json")
+DEPLOY_ENVS = os.path.join(BASE_DIR, "envs.json")
+
+if os.path.exists(DEV_ENVS): # Develop Env
+    env_file = open(DEV_ENVS)
+elif os.path.exists(DEPLOY_ENVS): # Deploy Env
+    env_file = open(DEPLOY_ENVS)
+else:
+    env_file = None
+
+if env_file is None: # System environ
+    try:
+        GOOGLE_KEY = os.environ['GOOGLE_KEY']
+        GOOGLE_SECRET = os.environ['GOOGLE_SECRET']
+    except KeyError as error_msg:
+        raise ImproperlyConfigured(error_msg)
+else: # JSON env
+    envs = json.loads(env_file.read())
+    GOOGLE_KEY = get_env('GOOGLE_KEY', envs)
+    GOOGLE_SECRET = get_env('GOOGLE_SECRET', envs)
+
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = GOOGLE_KEY
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = GOOGLE_SECRET
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = ['email']
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -43,7 +82,24 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'rest_framework',
+    #
+    # 'django.contrib.sites',
+    # 'allauth',
+    # 'allauth.account',
+    # 'allauth.socialaccount',
+    # 'allauth.socialaccount.providers.facebook',
+    # 'allauth.socialaccount.providers.kakao',
+    # 'allauth.socialaccount.providers.naver',
+
+    # 'social_django',
+    #
+    # 'oauth2_provider',
+    # 'rest_framework_social_oauth2',
+    # 'social.apps.django_app.default',
+    # 'rest_framework_social_oauth2',
+
 ]
 
 MIDDLEWARE = [
@@ -55,8 +111,14 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    #'AuthSer.middleware_web.TokenMiddleware',
+    'AuthSer.custom_middle.TokenMiddleware',
+    #
+    # 'corsheaders.middleware.CorsMiddleware',
+
+    # 'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 ROOT_URLCONF = 'ShevAuthServer.urls'
 
@@ -71,10 +133,14 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'ShevAuthServer.wsgi.application'
 
@@ -85,7 +151,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'shevdb', # DB명
-        'USER' : 'yejin', # 데이터베이스 계정
+        'USER' : 'root', # 데이터베이스 계정
         'PASSWORD' : 'yejin', # 비밀번호
         'HOST' : '192.168.0.24', # 데이터베이스 주소
         'PORT' : '3306', # 포트번호
@@ -97,28 +163,26 @@ CACHES = {
     'default' : {
         'BACKEND' : 'redis_cache.RedisCache',
         'LOCATION' : [ # Redis Server의 위치
-            'redis://127.0.0.1:6379/1', # Primary Server - Read & Write
+            'redis://192.168.0.24:6379/1', # Primary Server - Read & Write
         #    '127.0.0.1:6380', # Secondary Server - Read Only
         ],
-        #'OPTIONS' : {
-        #    'DB' : 1, # Key와 Value가 다른 공간에 존재하는지?
-        #    'PASSWORD' : 'yejinredis', # Redis Server 비밀번호
-        #   'MASTER_CACHE' : '127.0.0.1:6379',
-        #    'PARSER_CLASS' : 'redis.connection.HiredisParser', # C를쓰므로 PythonParser보다 빠름
-        #    'SOCKET_TIMEOUT' : 5,
-        #    'SOCKET_CONNECT_TIMEOUT' : 5,
-        #   'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            #'CONNECTION_POOL_CLASS' : 'redis.BlockingConnectionPool',
-            #'CONNECTION_POOL_CLASS_KWARGS' : {
-             #   'max_connections' : 50,
-             #   'timeout' : 20,
-
+        # 'OPTIONS' : {
+        #     'DB' : 1, # Key와 Value가 다른 공간에 존재하는지?
+        #     'PASSWORD' : 'yejinredis', # Redis Server 비밀번호
+        #     'MASTER_CACHE' : '127.0.0.1:6379',
+        #     'PARSER_CLASS' : 'redis.connection.HiredisParser', # C를 쓰므로 PythonParser보다 빠름
+        #     'SOCKET_TIMEOUT' : 5,
+        #     'SOCKET_CONNECT_TIMEOUT' : 5,
+        #     'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        #     'CONNECTION_POOL_CLASS' : 'redis.BlockingConnectionPool',
+        #     'CONNECTION_POOL_CLASS_KWARGS' : {
+        #        'max_connections' : 50,
+        #        'timeout' : 20,
         #    },
     },
     'KEY_PREFIX' : 'example'
+  # }
 }
-
-#CACHE_TTL = 60 * 15
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -138,6 +202,27 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = {
+    'social_core.backends.google.GoogleOAuth2',
+    # 'social_core.backends.facebook.FacebookOAuth2',
+
+    'django.contrib.auth.backends.ModelBackend',
+    # 'allauth.account.auth_backends.AuthenticationBackend',
+
+    # 'social.backends.facebook.FacebookAppOAuth2',
+    # 'social.backends.facebook.FacebookOAuth2'
+    'rest_framework_social_oauth2.backends.DjangoOAuth2',
+    # 'django.contrib.auth.backends.ModelBackend',
+}
+SOCIAL_AUTH_URL_NAMESPACE = 'social'
+
+# LOGIN_REDIRECT_URL = 'oauth/google'
+
+#
+#
+# SITE_ID=1
+#
+# SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
@@ -152,11 +237,11 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
 REST_FRAMEWORK= {
     'DEFAULT_RENDERER_CLASSES' : (
@@ -167,6 +252,9 @@ REST_FRAMEWORK= {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+
+        # 'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+        # 'rest_framework_social_oauth2.authentication.SocialAuthentication',
     ),
     #'DEFAULT_PERMISSION_CLASSES' : (
         #'rest_framework.permissions.DjangoModelPermissionsorAnonReadOnly',

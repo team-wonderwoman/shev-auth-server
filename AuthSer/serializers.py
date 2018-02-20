@@ -8,3 +8,7 @@ class UserModelSerializer(ModelSerializer):
         model = User
         fields = ('id','user_email','password','user_name','user_tel','created_time','modified_time')
 
+
+# class OauthUserSerializer(ModelSerializer):
+#     class Meta:
+#
