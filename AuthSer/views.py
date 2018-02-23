@@ -39,7 +39,6 @@ def signup(request):
         serializer = UserModelSerializer(data=request.data)
 
         if serializer.is_valid():
-            # TODO 비밀번호 암호화  - 함수로 구현하기
             serializer.save()
             # 회원 가입 확인 메일 발송
             #send_registration_mail(serializer)
@@ -75,17 +74,6 @@ def login(request):
         logger.debug("token_auth_check")
 
         # Redis에 사용자의 토큰이 있는지 확인 - Session exist의 경우
-        # if token_authentication(request):
-        # #if redis_get(split_header_token(request)):
-        #     print(const_value['SESSION_EXIST'])
-        #     logger.debug(const_value['SESSION_EXIST'])
-        #     # 토큰 만료 시간 재설정
-        #     redis_expire(split_header_token(request))
-        #
-        #     status_code['LOGIN_SUCCESS']['data'] = {'User_id' : user_id.id , 'addtional' : const_value['SESSION_EXIST']}
-        #     return Response({'result' : status_code['LOGIN_SUCCESS']} , status=status.HTTP_200_OK)
-
-
 
         # # 사용자가 입력한 비밀번호가 DB에 저장된 비밀번호와 같은지 비교 (로그인) - Session이 없는 경우
         # else:
@@ -103,9 +91,6 @@ def login(request):
             r = requests.post("http://192.168.0.24:8001/session/create/", data=send_data)
             print("새로운 request")
 
-            # print(r.json())
-            # print(dir(r.json()))
-            # print(r.json().get('result'))
 
             if r.json().get('result').get('code') == 1 :
                 return Response({'result' : status_code['LOGIN_SUCCESS']}, status=status.HTTP_200_OK)
@@ -135,13 +120,11 @@ def login(request):
 #
 #         return Response({'result': status_code['SUCCESS']}, status=status.HTTP_200_OK)
 
-# TODO OAuth
 # class UserList(generics.ListAPIView):
 #   queryset = User.objects.all()
 #   serializer_class = OauthSerializer
 
 
-# TODO OAuth
 # class CurrentUser(generics.RetrieveAPIView):
 #   def get(self, request):
 #       serializer = OauthSerializer(request.user)
@@ -169,15 +152,6 @@ class LogoutAPIView(APIView):
                 print("새로운 request")
 
                 return Response({'result': status_code['LOGOUT_SUCCESS']}, status=status.HTTP_200_OK)
-        #
-        # if token_authentication(request): # 토큰이 있는 경우
-        #     token = split_header_token(request)
-        #     logger.debug(token)
-
-            # # 레디스에 저장했던 토큰 삭제
-            # if redis_get(token):
-            #     redis_delete(token)
-            #     return Response({'result' : status_code['LOGOUT_SUCCESS']}, status=status.HTTP_200_OK)
 
             else: # 세션이 없는 경우
                 status_code['LOGOUT_FAIL']['data'] =  const_value['TOKEN_DOES_NOT_EXIST']
@@ -189,20 +163,7 @@ class LogoutAPIView(APIView):
 class ProfileAPIView(APIView):
     # [GET] 회원 정보 조회
     def get(self,request, *args, **kwargs):
-        # token = split_header_token(request)
-        # if token is None:
-        #     status_code['LOGOUT_FAIL']['data'] = const_value['HEADER_DOES_NOT_EXIST']
-        #     return Response({'result': status_code['LOGOUT_FAIL']}, status=status.HTTP_200_OK)
-        #
-        # else:
-        #     send_data = {'Token': token}
-        #
-        #     r = requests.post("http://192.168.0.24:8001/session/check/", data=send_data)
-        #     print("새로운 request")
-        #
-        #     print(r.json())
-        #
-        #     if r.json().get('result').get('code') == 1:  # 세션이 있는 경우
+
         try :
             user_id = self.kwargs['user_id']
             print(user_id)
@@ -214,26 +175,11 @@ class ProfileAPIView(APIView):
         status_code['USER_INFO_GET_SUCCESS']['data'] = user_info.data
         return Response({'result' : status_code['USER_INFO_GET_SUCCESS']}, status=status.HTTP_200_OK)
 
-            # else:
-            #     status_code['USER_INFO_GET_FAIL']['data'] = const_value['TOKEN_DOES_NOT_EXIST']
-            #     return Response({'result': status_code['USER_INFO_GET_FAIL']},status=status.HTTP_200_OK)
+
 
     # [PUT] 회원 정보 수정
     def put(self, request, *args, **kwargs):
-        # token = split_header_token(request)
-        # if token is None:
-        #     status_code['LOGOUT_FAIL']['data'] = const_value['HEADER_DOES_NOT_EXIST']
-        #     return Response({'result': status_code['LOGOUT_FAIL']}, status=status.HTTP_200_OK)
-        #
-        # else:
-        #     send_data = {'Token': token}
-        #
-        #     r = requests.post("http://192.168.0.24:8001/session/check/", data=send_data)
-        #     print("새로운 request")
-        #
-        #     print(r.json())
-        #
-        #     if r.json().get('result').get('code') == 1:  # 세션이 있는 경우
+
         try:
             user_id = self.kwargs['user_id'] # 사용자의 user_id 가져옴
             user_info = User.objects.get(pk=user_id) # 사용자의 회원 정보를 담고 있는 User object를 가져옴
@@ -258,48 +204,17 @@ class ProfileAPIView(APIView):
             return Response({'result': status_code['USER_INFO_MODIFY_FAIL']},
                         status=status.HTTP_200_OK)
 
-            # else:
-            #     status_code['USER_INFO_MODIFY_FAIL']['data'] = const_value['TOKEN_DOES_NOT_EXIST']
-            #     return Response({'result': status_code['USER_INFO_MODIFY_FAIL']}, status=status.HTTP_200_OK)
-
 
 # 회원 탈퇴
 class SignoutAPIView(APIView):
     def get(self, request, *args, **kwargs):
-        # token = split_header_token(request)
-        # if token is None:
-        #     status_code['LOGOUT_FAIL']['data'] = const_value['HEADER_DOES_NOT_EXIST']
-        #     return Response({'result': status_code['LOGOUT_FAIL']}, status=status.HTTP_200_OK)
-        #
-        # else:
-        #     send_data = {'Token': token}
-        #
-        #     r = requests.post("http://192.168.0.24:8001/session/check/", data=send_data)
-        #     print("새로운 request")
-        #
-        #     print(r.json())
-        #
-        #     if r.json().get('result').get('code') == 1:  # 세션이 있는 경우
+
         try:
             token = split_header_token(request)
             user_id = self.kwargs['user_id'] # 사용자의 user_id를 가져옴
             print(user_id)
 
 
-            print("sssss")
-            #
-            # topic = TopicMember.objects.filter(user_id=user_id)
-            # print(topic)
-            # if topic is not None:
-            #     topic.delete()
-            #
-            # chat = ChatRoomMember.objects.filter(user=user_id)
-            # if chat is not None:
-            #     chat.delete()
-            #
-            # group = GroupMember.objects.filter(user_id=user_id)
-            # if group is not None:
-            #     group.delete()
 
             user_query = User.objects.get(pk=user_id) # 사용자의 회원 정보를 담고 있는 User object를 가져옴
             print(user_query)
@@ -317,10 +232,4 @@ class SignoutAPIView(APIView):
         except:
             status_code['USER_SIGNOUT_FAIL']['data'] = "Can't delete user objects"
             return Response({'result' : status_code['USER_SIGNOUT_FAIL']}, status=status.HTTP_200_OK)
-
-            # else:
-            #     status_code['USER_SIGNOUT_FAIL']['data'] = const_value['TOKEN_DOES_NOT_EXIST']
-            #     return Response({'result': status_code['USER_SIGNOUT_FAIL']}, status=status.HTTP_200_OK)
-
-
 

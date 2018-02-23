@@ -11,7 +11,6 @@ from django.utils.six import python_2_unicode_compatible
 from AuthSer.models import User
 
 
-# TODO group app 으로 이동
 class Group(models.Model):
     group_name = models.CharField(max_length=50, null=False)  # group_name 입력은 필수로 한다.
 
@@ -33,8 +32,6 @@ class Group(models.Model):
     # def get_topic(self):
     #     return self.topics.all()
 
-
-# TODO group app 으로 이동
 class GroupMember(models.Model):
     """
     어떤 그룹에 어떤 사용자가 있는지
